@@ -1,3 +1,30 @@
+//! # ChaCha20
+//!
+//! A Rust implementation of the ChaCha20 stream cipher. Complete with simple, auditable code.
+//!
+//! ## Features
+//!
+//! - [x] Stack-allocated
+//! - [x] No unsafe code blocks
+//! - [x] Zero dependencies
+//! - [x] Seek an index in the keystream or a block in the keystream.
+//!
+//! ## Usage
+//!
+//! ```rust
+//! use chacha20::ChaCha20;
+//! let key = hex::decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f").unwrap();
+//! let key: [u8; 32] = key.try_into().unwrap();
+//! let nonce = hex::decode("000000000000004a00000000").unwrap();
+//! let nonce: [u8; 12] = nonce.try_into().unwrap();
+//! let seek = 42; // start the cipher at the 42nd index
+//! let mut chacha = ChaCha20::new(key, nonce, seek);
+//! let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
+//! let to = binding.as_mut_slice();
+//! chacha.apply_keystream(to);
+//! chacha.seek(seek); // move the keystream index back to 42
+//! ```
+
 const WORD_1: u32 = 0x61707865;
 const WORD_2: u32 = 0x3320646e;
 const WORD_3: u32 = 0x79622d32;
@@ -14,6 +41,7 @@ const CHACHA_ROUND_INDICIES: [(usize, usize, usize, usize); 8] = [
 ];
 const CHACHA_BLOCKSIZE: usize = 64;
 
+/// The ChaCha20 stream cipher.
 #[derive(Debug)]
 pub struct ChaCha20 {
     key: [u8; 32],
@@ -23,6 +51,7 @@ pub struct ChaCha20 {
 }
 
 impl ChaCha20 {
+    /// Make a new instance of ChaCha20 from an index in the keystream.
     pub fn new(key: [u8; 32], nonce: [u8; 12], seek: u32) -> Self {
         let inner = seek / 64;
         let seek = (seek % 64) as usize;
@@ -34,8 +63,19 @@ impl ChaCha20 {
         }
     }
 
-    // new from block
+    /// Make a new instance of ChaCha20 from a block in the keystream.
+    pub fn new_from_block(key: [u8; 32], nonce: [u8; 12], block: u32) -> Self {
+        let inner = block;
+        let seek = 0;
+        ChaCha20 {
+            key,
+            nonce,
+            inner,
+            seek,
+        }
+    }
 
+    /// Apply the keystream to a message.
     pub fn apply_keystream<'a>(&'a mut self, to: &'a mut [u8]) -> &[u8] {
         let num_full_blocks = to.len() / CHACHA_BLOCKSIZE;
         let mut j = 0;
@@ -60,7 +100,17 @@ impl ChaCha20 {
         to
     }
 
-    // update
+    /// Update the index of the keystream to an index in the keystream.
+    pub fn seek(&mut self, seek: u32) {
+        self.inner = seek / 64;
+        self.seek = (seek % 64) as usize;
+    }
+
+    /// Update the index of the keystream to a block.
+    pub fn block(&mut self, block: u32) {
+        self.inner = block;
+        self.seek = 0;
+    }
 }
 
 fn quarter_round(state: &mut [u32; 16], a: usize, b: usize, c: usize, d: usize) {
@@ -346,6 +396,25 @@ mod tests {
         assert_eq!(binding, to);
     }
 
+    #[test]
+    fn test_new_from_block() {
+        let key = hex::decode("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
+            .unwrap();
+        let key: [u8; 32] = key.try_into().unwrap();
+        let nonce = hex::decode("000000000000004a00000000").unwrap();
+        let nonce: [u8; 12] = nonce.try_into().unwrap();
+        let block: u32 = 1;
+        let mut chacha = ChaCha20::new_from_block(key, nonce, block);
+        let mut binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
+        let to = binding.as_mut_slice();
+        chacha.apply_keystream(to);
+        assert_eq!(to, hex::decode("6e2e359a2568f98041ba0728dd0d6981e97e7aec1d4360c20a27afccfd9fae0bf91b65c5524733ab8f593dabcd62b3571639d624e65152ab8f530c359f0861d807ca0dbf500d6a6156a38e088a22b65e52bc514d16ccf806818ce91ab77937365af90bbf74a35be6b40b8eedf2785e42874d").unwrap());
+        chacha.block(block);
+        chacha.apply_keystream(to);
+        let binding = *b"Ladies and Gentlemen of the class of '99: If I could offer you only one tip for the future, sunscreen would be it.";
+        assert_eq!(binding, to);
+    }
+
     fn gen_garbage(garbage_len: u32) -> Vec<u8> {
         let mut rng = rand::thread_rng();
         let buffer: Vec<u8> = (0..garbage_len).map(|_| rng.gen()).collect();
@@ -354,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_fuzz_other() {
-        for _ in 0..1 {
+        for _ in 0..100 {
             let garbage_key = gen_garbage(32);
             let key = garbage_key.as_slice().try_into().unwrap();
             let garbage_nonce = gen_garbage(12);
