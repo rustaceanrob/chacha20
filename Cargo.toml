@@ -2,6 +2,11 @@
 name = "chacha20"
 version = "0.1.0"
 edition = "2021"
+license-file = "LICENSE"
+description = "ChaCha20 stream cipher."
+repository = "https://github.com/rustaceanrob/chacha20"
+readme = "README.md"
+rust-version = "1.56.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,3 +16,7 @@ edition = "2021"
 hex = "0.4.3"
 chacha20 = "0.9.1"
 rand = "0.8.4"
+
+[lib]
+name = "chacha_20"
+path = "src/lib.rs"
