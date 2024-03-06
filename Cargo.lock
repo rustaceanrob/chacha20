@@ -10,15 +10,6 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chacha20"
-version = "0.1.0"
-dependencies = [
- "chacha20 0.9.1",
- "hex",
- "rand",
-]
-
-[[package]]
-name = "chacha20"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3613f74bd2eac03dad61bd53dbe620703d4371614fe0bc3b9f04dd36fe4e818"
@@ -133,6 +124,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rust_chacha20"
+version = "0.2.0"
+dependencies = [
+ "chacha20",
+ "hex",
+ "rand",
 ]
 
 [[package]]

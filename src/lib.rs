@@ -100,6 +100,13 @@ impl ChaCha20 {
         to
     }
 
+    /// Get the keystream block at a specified block.
+    pub fn get_keystream(&mut self, block: u32) -> [u8; 64] {
+        self.block(block);
+        let keystream = keystream_at_slice(self.key, self.nonce, self.inner, self.seek);
+        keystream
+    }
+
     /// Update the index of the keystream to an index in the keystream.
     pub fn seek(&mut self, seek: u32) {
         self.inner = seek / 64;

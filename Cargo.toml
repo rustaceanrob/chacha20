@@ -1,6 +1,6 @@
 [package]
-name = "chacha20"
-version = "0.1.0"
+name = "rust_chacha20"
+version = "0.2.0"
 edition = "2021"
 license-file = "LICENSE"
 description = "ChaCha20 stream cipher."
@@ -18,5 +18,5 @@ chacha20 = "0.9.1"
 rand = "0.8.4"
 
 [lib]
-name = "chacha_20"
+name = "chacha20"
 path = "src/lib.rs"
