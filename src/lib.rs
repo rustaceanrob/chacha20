@@ -24,6 +24,7 @@
 //! chacha.apply_keystream(to);
 //! chacha.seek(seek); // move the keystream index back to 42
 //! ```
+#![cfg_attr(not(test), no_std)]
 
 const WORD_1: u32 = 0x61707865;
 const WORD_2: u32 = 0x3320646e;
@@ -103,8 +104,7 @@ impl ChaCha20 {
     /// Get the keystream block at a specified block.
     pub fn get_keystream(&mut self, block: u32) -> [u8; 64] {
         self.block(block);
-        let keystream = keystream_at_slice(self.key, self.nonce, self.inner, self.seek);
-        keystream
+        keystream_at_slice(self.key, self.nonce, self.inner, self.seek)
     }
 
     /// Update the index of the keystream to an index in the keystream.
